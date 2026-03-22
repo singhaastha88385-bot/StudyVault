@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📚 StudyVault Pro
 
 > A smart, all-in-one study companion built for the FastWeb Hackathon 2025.
@@ -197,3 +198,6 @@ This project is open source and available under the
   <br>
   <b>StudyVault Pro — Study Smarter, Not Harder 📚</b>
 </div>
+=======
+
+>>>>>>> 3e7fb3fc697573a50b0b498cc74893cc0b794311
