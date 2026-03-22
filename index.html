@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyVault — Resource Organizer</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── ANIMATED BACKGROUND ── -->
+  <div class="bg-canvas">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+  </div>
+  <div class="bg-grid"></div>
+
+  <!-- ══════════════════════════════════════
+       OWL OVERLAY (opening & closing scenes)
+       ══════════════════════════════════════ -->
+  <div class="owl-overlay" id="owl-overlay">
+
+    <!-- Opening scene -->
+    <div class="owl-scene owl-opening" id="owl-opening">
+      <div class="speech" id="owl-speech">Hey there! 👋 What's up?</div>
+
+      <div class="owl-wrap">
+        <svg width="200" height="220" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shadow -->
+          <ellipse cx="100" cy="212" rx="52" ry="8" fill="rgba(0,0,0,.12)"/>
+          <!-- Body -->
+          <ellipse cx="100" cy="130" rx="58" ry="72" fill="#c8a46e"/>
+          <!-- Belly -->
+          <ellipse cx="100" cy="148" rx="36" ry="48" fill="#f0d8a8"/>
+          <!-- Belly stripes -->
+          <path d="M78 130 Q100 125 122 130" stroke="#e0c090" stroke-width="1.5" fill="none" opacity=".6"/>
+          <path d="M74 142 Q100 136 126 142" stroke="#e0c090" stroke-width="1.5" fill="none" opacity=".6"/>
+          <path d="M76 154 Q100 148 124 154" stroke="#e0c090" stroke-width="1.5" fill="none" opacity=".6"/>
+          <!-- Wings -->
+          <ellipse class="owl-wing-l" cx="50"  cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(-8 50 135)"/>
+          <ellipse class="owl-wing-r" cx="150" cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(8 150 135)"/>
+          <!-- Head -->
+          <ellipse cx="100" cy="72" rx="50" ry="48" fill="#c8a46e"/>
+          <!-- Ear tufts -->
+          <polygon points="68,30 60,8 80,28"   fill="#a07030"/>
+          <polygon points="132,30 140,8 120,28" fill="#a07030"/>
+          <!-- Face disc -->
+          <ellipse cx="100" cy="76" rx="40" ry="36" fill="#e8c890"/>
+          <!-- Eye whites -->
+          <circle cx="82"  cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+          <circle cx="118" cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+          <!-- Glasses -->
+          <circle cx="82"  cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+          <circle cx="118" cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+          <line x1="99"  y1="68" x2="101" y2="68" stroke="#4a3010" stroke-width="2.5"/>
+          <line x1="65"  y1="62" x2="56"  y2="58" stroke="#4a3010" stroke-width="2"/>
+          <line x1="135" y1="62" x2="144" y2="58" stroke="#4a3010" stroke-width="2"/>
+          <!-- Pupils -->
+          <g class="owl-eye-l" style="transform-origin:82px 68px">
+            <circle cx="82" cy="68" r="9" fill="#2a1a08"/>
+            <circle cx="86" cy="64" r="3" fill="#fff" opacity=".8"/>
+            <circle cx="79" cy="72" r="1.5" fill="#fff" opacity=".4"/>
+          </g>
+          <g class="owl-eye-r" style="transform-origin:118px 68px">
+            <circle cx="118" cy="68" r="9" fill="#2a1a08"/>
+            <circle cx="122" cy="64" r="3" fill="#fff" opacity=".8"/>
+            <circle cx="115" cy="72" r="1.5" fill="#fff" opacity=".4"/>
+          </g>
+          <!-- Beak -->
+          <polygon points="100,82 92,94 108,94" fill="#e07830"/>
+          <line x1="92" y1="94" x2="108" y2="94" stroke="#c06020" stroke-width="1.2"/>
+          <!-- Blush -->
+          <ellipse cx="70"  cy="80" rx="8" ry="5" fill="#e08060" opacity=".35"/>
+          <ellipse cx="130" cy="80" rx="8" ry="5" fill="#e08060" opacity=".35"/>
+          <!-- Feet -->
+          <line x1="80"  y1="198" x2="72"  y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+          <line x1="80"  y1="198" x2="80"  y2="212" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+          <line x1="80"  y1="198" x2="88"  y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+          <line x1="120" y1="198" x2="112" y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+          <line x1="120" y1="198" x2="120" y2="212" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+          <line x1="120" y1="198" x2="128" y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+          <!-- Book -->
+          <g class="owl-book" style="transform-origin:155px 160px">
+            <rect x="136" y="148" width="38" height="28" rx="3" fill="#4a7c59"/>
+            <rect x="136" y="148" width="4"  height="28" rx="1" fill="#2d5a3a"/>
+            <line x1="144" y1="155" x2="168" y2="155" stroke="#fff" stroke-width="1.5" opacity=".5"/>
+            <line x1="144" y1="162" x2="168" y2="162" stroke="#fff" stroke-width="1.5" opacity=".5"/>
+            <line x1="144" y1="169" x2="168" y2="169" stroke="#fff" stroke-width="1.5" opacity=".5"/>
+            <text x="153" y="145" font-size="8" fill="#f7d96a" font-family="sans-serif" font-weight="bold">📖</text>
+          </g>
+          <!-- Graduation cap -->
+          <rect x="62" y="26" width="76" height="8" rx="2" fill="#2a1a08"/>
+          <polygon points="62,30 100,16 138,30" fill="#2a1a08"/>
+          <line x1="138" y1="30" x2="145" y2="44" stroke="#2a1a08" stroke-width="2"/>
+          <circle cx="145" cy="46" r="4" fill="#f7d96a"/>
+          <!-- Sparkles -->
+          <text x="20"  y="55"  font-size="14" opacity=".7" style="animation:sparkle 2s ease-in-out infinite">✨</text>
+          <text x="168" y="45"  font-size="12" opacity=".7" style="animation:sparkle 2s ease-in-out infinite .5s">⭐</text>
+          <text x="10"  y="120" font-size="10" opacity=".6" style="animation:sparkle 2s ease-in-out infinite 1s">✦</text>
+        </svg>
+      </div>
+
+      <button class="owl-btn" id="owl-btn" onclick="dismissOwl()">Let's Study! 🚀</button>
+    </div>
+
+    <!-- Closing scene -->
+    <div class="owl-scene owl-closing" id="owl-closing">
+      <div class="speech" id="owl-bye-speech">See you next time! 👋</div>
+      <div class="owl-wrap">
+        <svg width="180" height="200" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="100" cy="212" rx="52" ry="8" fill="rgba(0,0,0,.12)"/>
+          <ellipse cx="100" cy="130" rx="58" ry="72" fill="#c8a46e"/>
+          <ellipse cx="100" cy="148" rx="36" ry="48" fill="#f0d8a8"/>
+          <ellipse cx="50"  cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(-8 50 135)"/>
+          <ellipse cx="150" cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(8 150 135)"/>
+          <ellipse cx="100" cy="72" rx="50" ry="48" fill="#c8a46e"/>
+          <polygon points="68,30 60,8 80,28"   fill="#a07030"/>
+          <polygon points="132,30 140,8 120,28" fill="#a07030"/>
+          <ellipse cx="100" cy="76" rx="40" ry="36" fill="#e8c890"/>
+          <circle cx="82"  cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+          <circle cx="118" cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+          <circle cx="82"  cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+          <circle cx="118" cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+          <line x1="99"  y1="68" x2="101" y2="68" stroke="#4a3010" stroke-width="2.5"/>
+          <line x1="65"  y1="62" x2="56"  y2="58" stroke="#4a3010" stroke-width="2"/>
+          <line x1="135" y1="62" x2="144" y2="58" stroke="#4a3010" stroke-width="2"/>
+          <!-- Sleepy eyes -->
+          <g style="transform-origin:82px 68px; transform:scaleY(.35)">
+            <circle cx="82" cy="68" r="9" fill="#2a1a08"/>
+            <circle cx="86" cy="64" r="3" fill="#fff" opacity=".8"/>
+          </g>
+          <g style="transform-origin:118px 68px; transform:scaleY(.35)">
+            <circle cx="118" cy="68" r="9" fill="#2a1a08"/>
+            <circle cx="122" cy="64" r="3" fill="#fff" opacity=".8"/>
+          </g>
+          <!-- ZZZ -->
+          <text x="130" y="35" font-size="14" fill="#6a9ef7" font-family="sans-serif" font-weight="bold" opacity=".8" style="animation:floatZ 2s ease-in-out infinite">z</text>
+          <text x="144" y="22" font-size="18" fill="#6a9ef7" font-family="sans-serif" font-weight="bold" opacity=".7" style="animation:floatZ 2s ease-in-out infinite .3s">z</text>
+          <text x="160" y="10" font-size="22" fill="#6a9ef7" font-family="sans-serif" font-weight="bold" opacity=".6" style="animation:floatZ 2s ease-in-out infinite .6s">Z</text>
+          <polygon points="100,82 92,94 108,94" fill="#e07830"/>
+          <rect x="62"  y="26" width="76" height="8" rx="2" fill="#2a1a08"/>
+          <polygon points="62,30 100,16 138,30" fill="#2a1a08"/>
+          <line x1="138" y1="30" x2="145" y2="44" stroke="#2a1a08" stroke-width="2"/>
+          <circle cx="145" cy="46" r="4" fill="#f7d96a"/>
+        </svg>
+      </div>
+    </div>
+
+  </div><!-- /owl-overlay -->
+
+  <!-- ══════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════ -->
+  <header>
+    <div>
+      <div class="logo">Study<em>Vault</em></div>
+      <div class="logo-sub">FastWeb · Resource Hub</div>
+    </div>
+
+    <div class="clock-wrap">
+      <div class="clock-time" id="clock-time">00:00:00</div>
+      <div class="clock-date" id="clock-date">—</div>
+      <div class="clock-mode" id="clock-mode">☀ Day</div>
+    </div>
+
+    <div class="hright">
+      <button class="mode-toggle" id="mode-toggle" onclick="toggleMode()">🌙 Night Mode</button>
+      <div class="hstats">
+        <div class="stat"><div class="sn" id="st-t">0</div><div class="sl">Resources</div></div>
+        <div class="stat"><div class="sn" id="st-s">0</div><div class="sl">Starred</div></div>
+        <div class="stat"><div class="sn" id="st-c">0</div><div class="sl">Categories</div></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════
+       MAIN CONTENT
+       ══════════════════════════════════════ -->
+  <div class="wrap">
+
+    <div class="sh">// Add New Resource</div>
+
+    <!-- Add form -->
+    <div class="add-panel">
+      <div class="fg">
+        <div class="f">
+          <label>Title</label>
+          <input type="text" id="fi-t" placeholder="e.g. Khan Academy – Algebra">
+        </div>
+        <div class="f">
+          <label>URL</label>
+          <input type="url" id="fi-u" placeholder="https://..." oninput="prevFav()">
+        </div>
+        <div class="f">
+          <label>Category</label>
+          <select id="fi-c">
+            <option>Math</option>
+            <option>Science</option>
+            <option>Physics</option>
+            <option>Chemistry</option>
+            <option>Biology</option>
+            <option>Programming</option>
+            <option>English</option>
+            <option>History</option>
+            <option>Geography</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>Tags <small style="color:var(--border)">(comma)</small></label>
+          <input type="text" id="fi-g" placeholder="video, free, beginner">
+        </div>
+        <button class="btn-add" onclick="addRes()">＋ Add</button>
+      </div>
+
+      <div class="fg2" style="margin-top:10px;">
+        <div class="f">
+          <label>Notes</label>
+          <input type="text" id="fi-n" placeholder="Quick note about this resource...">
+        </div>
+        <div class="fp-row">
+          <img id="fav-preview" src="" alt="">
+          <div class="fp-text" id="fp-txt">Enter a URL to preview its favicon</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls bar -->
+    <div class="ctrl">
+      <div class="sbox">
+        <span class="sico">⌕</span>
+        <input type="text" id="si" placeholder="Search title, URL, tag, notes, category…" oninput="onSrch(this)">
+        <button class="sclr" id="sclr" onclick="clrSrch()">✕</button>
+      </div>
+      <select class="ssort" id="ssrt" onchange="render()">
+        <option value="new">Newest first</option>
+        <option value="old">Oldest first</option>
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+      </select>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <!-- Resource grid -->
+    <div class="grid" id="grid"></div>
+
+  </div><!-- /wrap -->
+
+  <!-- Notifications -->
+  <div class="sf"    id="sf">✓ Saved automatically</div>
+  <div class="toast" id="toast"></div>
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+
+</body>
+</html>

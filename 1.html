@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyVault — Resource Organizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="bookmark.js">
+<style>
+  :root {
+    --bg: #0c0c0f;
+    --surface: #141418;
+    --surface2: #1e1e25;
+    --border: #2a2a35;
+    --accent: #7c6af7;
+    --accent2: #f7a26a;
+    --accent3: #6af7c8;
+    --text: #e8e8f0;
+    --muted: #7a7a90;
+    --danger: #f76a6a;
+    --star: #f7d96a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(124,106,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(12,12,15,0.8);
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .badge {
+    font-size: 10px;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 8px;
+    vertical-align: middle;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+  .header-stats {
+    display: flex;
+    gap: 24px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .header-stats strong { color: var(--text); font-size: 16px; display: block; }
+
+  /* ── MAIN LAYOUT ── */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 40px;
+  }
+
+  /* ── ADD FORM ── */
+  .add-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .add-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 160px auto;
+    gap: 12px;
+    align-items: end;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+  }
+  .field select option { background: var(--surface2); }
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-add:hover { background: #9585fa; transform: translateY(-1px); }
+  .btn-add:active { transform: translateY(0); }
+
+  /* Tags row */
+  .tags-row {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tags-row label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .tags-row input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    outline: none;
+  }
+  .tags-row input:focus { border-color: var(--accent3); }
+
+  /* ── CONTROLS ── */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .search-wrap input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px 10px 38px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap::before {
+    content: '⌕';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+    pointer-events: none;
+  }
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip-star.active { background: var(--star); border-color: var(--star); color: #000; }
+
+  /* ── RESOURCES GRID ── */
+  .resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .resource-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    transition: all 0.2s;
+    animation: slideIn 0.3s ease forwards;
+    overflow: hidden;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .resource-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(124,106,247,0.12);
+  }
+  .resource-card.starred { border-color: rgba(247,217,106,0.4); }
+  .card-favicon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    margin-right: 8px;
+    display: inline-block;
+    vertical-align: middle;
+    background: var(--surface2);
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-link {
+    font-size: 11px;
+    color: var(--accent);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .card-link:hover { text-decoration: underline; }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card-category {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .card-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .tag-pill {
+    font-size: 10px;
+    background: rgba(106,247,200,0.1);
+    color: var(--accent3);
+    border: 1px solid rgba(106,247,200,0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .btn-icon {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+  .btn-icon:hover { border-color: var(--accent); color: var(--text); }
+  .btn-star.active { color: var(--star); border-color: var(--star); background: rgba(247,217,106,0.1); }
+  .btn-delete:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Category color mapping */
+  .cat-Math { background: rgba(247,162,106,0.15); color: var(--accent2); }
+  .cat-Science { background: rgba(106,247,200,0.15); color: var(--accent3); }
+  .cat-Programming { background: rgba(124,106,247,0.15); color: var(--accent); }
+  .cat-English { background: rgba(247,106,106,0.15); color: #f76a6a; }
+  .cat-History { background: rgba(247,217,106,0.15); color: var(--star); }
+  .cat-Other { background: rgba(122,122,144,0.15); color: var(--muted); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+    grid-column: 1/-1;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--text); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--accent3);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    z-index: 1000;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    color: var(--accent3);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 768px) {
+    header { padding: 16px 20px; }
+    .container { padding: 20px; }
+    .form-row { grid-template-columns: 1fr 1fr; }
+    .form-row .btn-add { grid-column: 1/-1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Study<span>Vault</span> <span class="badge">FastWeb</span></div>
+  <div class="header-stats">
+    <div><strong id="stat-total">0</strong> resources</div>
+    <div><strong id="stat-starred">0</strong> starred</div>
+    <div><strong id="stat-cats">0</strong> categories</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ADD FORM -->
+  <div class="add-section">
+    <div class="section-title">// Add Resource</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Title</label>
+        <input type="text" id="inp-title" placeholder="e.g. Khan Academy Algebra">
+      </div>
+      <div class="field">
+        <label>URL</label>
+        <input type="url" id="inp-url" placeholder="https://...">
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="inp-cat">
+          <option value="Math">Math</option>
+          <option value="Science">Science</option>
+          <option value="Programming">Programming</option>
+          <option value="English">English</option>
+          <option value="History">History</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <button class="btn-add" onclick="addResource()">+ Add</button>
+    </div>
+    <div class="tags-row">
+      <label>Tags</label>
+      <input type="text" id="inp-tags" placeholder="comma-separated tags e.g. algebra, beginner, video">
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="search-wrap">
+      <input type="text" id="search-inp" placeholder="Search resources..." oninput="render()">
+    </div>
+    <div class="filter-chips">
+      <span class="chip active" data-filter="all" onclick="setFilter('all',this)">All</span>
+      <span class="chip" data-filter="Math" onclick="setFilter('Math',this)">Math</span>
+      <span class="chip" data-filter="Science" onclick="setFilter('Science',this)">Science</span>
+      <span class="chip" data-filter="Programming" onclick="setFilter('Programming',this)">Programming</span>
+      <span class="chip" data-filter="English" onclick="setFilter('English',this)">English</span>
+      <span class="chip" data-filter="History" onclick="setFilter('History',this)">History</span>
+      <span class="chip" data-filter="Other" onclick="setFilter('Other',this)">Other</span>
+      <span class="chip chip-star" data-filter="starred" onclick="setFilter('starred',this)">★ Starred</span>
+    </div>
+  </div>
+
+  <!-- GRID -->
+  <div class="resources-grid" id="grid"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let resources = JSON.parse(localStorage.getItem('studyvault') || '[]');
+let currentFilter = 'all';
+
+// Seed with example data if empty
+if (resources.length === 0) {
+  resources = [
+    { id: 1, title: 'Khan Academy', url: 'https://khanacademy.org', category: 'Math', tags: ['free', 'video'], starred: true },
+    { id: 2, title: 'MDN Web Docs', url: 'https://developer.mozilla.org', category: 'Programming', tags: ['reference', 'web'], starred: false },
+    { id: 3, title: 'Crash Course History', url: 'https://youtube.com/@crashcourse', category: 'History', tags: ['youtube', 'video'], starred: false },
+  ];
+  save();
+}
+
+function save() {
+  localStorage.setItem('studyvault', JSON.stringify(resources));
+}
+
+function addResource() {
+  const title = document.getElementById('inp-title').value.trim();
+  const url = document.getElementById('inp-url').value.trim();
+  const category = document.getElementById('inp-cat').value;
+  const tagsRaw = document.getElementById('inp-tags').value.trim();
+  if (!title || !url) { showToast('⚠ Title and URL are required'); return; }
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+  resources.unshift({ id: Date.now(), title, url, category, tags, starred: false });
+  save(); render();
+  ['inp-title','inp-url','inp-tags'].forEach(id => document.getElementById(id).value = '');
+  showToast('✓ Resource saved!');
+}
+
+function deleteResource(id) {
+  resources = resources.filter(r => r.id !== id);
+  save(); render();
+  showToast('Deleted');
+}
+
+function toggleStar(id) {
+  const r = resources.find(r => r.id === id);
+  if (r) { r.starred = !r.starred; save(); render(); }
+}
+
+function setFilter(val, el) {
+  currentFilter = val;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function getFavicon(url) {
+  try { return `https://www.google.com/s2/favicons?sz=32&domain=${new URL(url).hostname}`; }
+  catch { return ''; }
+}
+
+function render() {
+  const q = document.getElementById('search-inp').value.toLowerCase();
+  let filtered = resources.filter(r => {
+    if (currentFilter === 'starred') return r.starred;
+    if (currentFilter !== 'all' && r.category !== currentFilter) return false;
+    if (q) return r.title.toLowerCase().includes(q) || r.url.toLowerCase().includes(q) || r.tags.some(t => t.toLowerCase().includes(q));
+    return true;
+  });
+
+  const grid = document.getElementById('grid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="icon">📚</div><h3>No resources found</h3><p>Add your first resource above, or try a different filter.</p></div>`;
+  } else {
+    grid.innerHTML = filtered.map(r => `
+      <div class="resource-card ${r.starred ? 'starred' : ''}">
+        <div class="card-title">
+          <img class="card-favicon" src="${getFavicon(r.url)}" onerror="this.style.display='none'" alt="">
+          ${escHtml(r.title)}
+        </div>
+        <a class="card-link" href="${escHtml(r.url)}" target="_blank" rel="noopener">${escHtml(r.url)}</a>
+        <div class="card-meta">
+          <span class="card-category cat-${r.category}">${r.category}</span>
+          <div class="card-actions">
+            <button class="btn-icon btn-star ${r.starred ? 'active' : ''}" onclick="toggleStar(${r.id})" title="${r.starred ? 'Unstar' : 'Star'}">★</button>
+            <button class="btn-icon btn-delete" onclick="deleteResource(${r.id})" title="Delete">✕</button>
+          </div>
+        </div>
+        ${r.tags.length ? `<div class="card-tags">${r.tags.map(t => `<span class="tag-pill">#${escHtml(t)}</span>`).join('')}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // Stats
+  document.getElementById('stat-total').textContent = resources.length;
+  document.getElementById('stat-starred').textContent = resources.filter(r => r.starred).length;
+  document.getElementById('stat-cats').textContent = [...new Set(resources.map(r => r.category))].length;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement.closest('.add-section')) addResource();
+});
+
+render();
+</script>
+</body>
+</html>

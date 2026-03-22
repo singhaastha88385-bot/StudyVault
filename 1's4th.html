@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyVault — Resource Organizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════ ROOT TOKENS ═══════ */
+:root {
+  --bg:#f5f0e8;--surface:#fffdf8;--surface2:#f0ebe0;--surface3:#e8e1d4;
+  --border:#d8d0c0;--text:#2c2416;--muted:#8a7a60;
+  --accent:#4a7c59;--accent-rgb:74,124,89;--accent2:#c4783a;--accent3:#2d7a8a;
+  --danger:#c44040;--star:#c49a20;--radius:14px;
+  --is-dark:0;
+}
+body.dark {
+  --bg:#0d0e12;--surface:#14161c;--surface2:#1c1f28;--surface3:#252833;
+  --border:#2e3244;--text:#e4e8f5;--muted:#6e748e;
+  --accent:#7c9ef7;--accent-rgb:124,158,247;--accent2:#f7a26a;--accent3:#6af7c8;
+  --danger:#f76a7a;--star:#f7d96a;
+  --is-dark:1;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden;transition:background .7s,color .7s;}
+
+/* ═══════ BG LAYER ═══════ */
+.bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(90px);animation:orbF 20s ease-in-out infinite alternate;}
+body:not(.dark) .bg-orb{opacity:.07;}
+body.dark .bg-orb{opacity:.10;}
+.bg-orb:nth-child(1){width:500px;height:500px;top:-100px;left:-100px;background:var(--accent);animation-delay:0s;}
+.bg-orb:nth-child(2){width:380px;height:380px;bottom:-80px;right:-80px;background:var(--accent3);animation-delay:-7s;}
+.bg-orb:nth-child(3){width:300px;height:300px;top:40%;left:55%;background:var(--accent2);animation-delay:-14s;}
+@keyframes orbF{from{transform:translate(0,0) scale(1);}to{transform:translate(40px,28px) scale(1.09);}}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(var(--accent-rgb),.028) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--accent-rgb),.028) 1px,transparent 1px);
+  background-size:48px 48px;}
+
+/* ═══════ HEADER ═══════ */
+header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:13px 34px;
+  border-bottom:1px solid var(--border);backdrop-filter:blur(20px);
+  background:color-mix(in srgb, var(--bg) 82%, transparent);}
+.logo{font-family:'Caveat',cursive;font-size:28px;font-weight:700;letter-spacing:.5px;line-height:1;}
+.logo em{color:var(--accent);font-style:normal;}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+
+/* CLOCK */
+.clock-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.clock-time{font-family:'Caveat',cursive;font-size:26px;font-weight:700;color:var(--accent);letter-spacing:2px;line-height:1;}
+.clock-date{font-size:10px;color:var(--muted);letter-spacing:.8px;}
+.clock-mode{font-size:10px;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;
+  background:color-mix(in srgb,var(--accent2) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent2) 25%,transparent);
+  border-radius:20px;padding:2px 9px;margin-top:2px;}
+
+.hright{display:flex;align-items:center;gap:16px;}
+.mode-toggle{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 13px;
+  cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:var(--muted);transition:all .2s;white-space:nowrap;}
+.mode-toggle:hover{border-color:var(--accent);color:var(--text);}
+.hstats{display:flex;gap:20px;}
+.stat .sn{font-family:'Caveat',cursive;font-size:20px;font-weight:700;color:var(--accent);line-height:1;}
+.stat .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+
+/* ═══════ OWL OVERLAY ═══════ */
+.owl-overlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter:blur(6px);
+  opacity:1;transition:opacity .6s;pointer-events:all;}
+.owl-overlay.hiding{opacity:0;pointer-events:none;}
+.owl-overlay.hidden{display:none;}
+
+.owl-scene{position:relative;display:flex;flex-direction:column;align-items:center;gap:0;}
+
+/* OWL SVG wrapper */
+.owl-wrap{animation:owlBounce 2.2s ease-in-out infinite;}
+@keyframes owlBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+
+/* SPEECH BUBBLE */
+.speech{position:relative;background:var(--surface);border:2px solid var(--accent);border-radius:18px;
+  padding:16px 22px;max-width:360px;text-align:center;margin-bottom:18px;
+  font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:var(--text);line-height:1.5;
+  box-shadow:0 8px 32px rgba(var(--accent-rgb),.2);
+  animation:speechPop .4s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes speechPop{from{opacity:0;transform:scale(.7);}to{opacity:1;transform:scale(1);}}
+.speech::after{content:'';position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
+  border:7px solid transparent;border-top-color:var(--accent);}
+.speech::before{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-top-color:var(--surface);z-index:1;}
+
+.owl-btn{margin-top:24px;background:var(--accent);color:#fff;border:none;border-radius:30px;
+  padding:12px 36px;font-family:'Caveat',cursive;font-size:20px;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 20px rgba(var(--accent-rgb),.35);transition:all .18s;letter-spacing:.3px;}
+.owl-btn:hover{filter:brightness(1.1);transform:translateY(-2px);}
+
+/* CLOSING OWL */
+.owl-closing{display:none;}
+.owl-overlay.closing .owl-closing{display:flex;flex-direction:column;align-items:center;}
+.owl-overlay.closing .owl-opening{display:none;}
+
+/* OWL SVG animations */
+.owl-eye-l,.owl-eye-r{animation:blink 4s ease-in-out infinite;}
+.owl-eye-r{animation-delay:.08s;}
+@keyframes blink{0%,90%,100%{transform:scaleY(1);}95%{transform:scaleY(.05);}}
+.owl-wing-l{transform-origin:90% 50%;animation:wingL 2.4s ease-in-out infinite;}
+.owl-wing-r{transform-origin:10% 50%;animation:wingR 2.4s ease-in-out infinite;}
+@keyframes wingL{0%,100%{transform:rotate(0deg);}50%{transform:rotate(-12deg);}}
+@keyframes wingR{0%,100%{transform:rotate(0deg);}50%{transform:rotate(12deg);}}
+.owl-book{animation:bookWiggle 3s ease-in-out infinite;}
+@keyframes bookWiggle{0%,100%{transform:rotate(-2deg);}50%{transform:rotate(2deg);}}
+
+/* ═══════ LAYOUT ═══════ */
+.wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:28px 34px;}
+.sh{display:flex;align-items:center;gap:10px;font-family:'Caveat',cursive;font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:13px;}
+.sh::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ═══════ ADD PANEL ═══════ */
+.add-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;position:relative;overflow:hidden;}
+.add-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2));}
+.fg{display:grid;grid-template-columns:2fr 2fr 1.2fr 1.2fr auto;gap:10px;align-items:end;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.f{display:flex;flex-direction:column;gap:5px;}
+.f label{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.f input,.f select{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+.f input:focus,.f select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1);}
+.f select option{background:var(--surface2);}
+.btn-add{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:9px 22px;font-family:'Caveat',cursive;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;height:39px;align-self:end;transition:all .18s;box-shadow:0 4px 16px rgba(var(--accent-rgb),.22);}
+.btn-add:hover{filter:brightness(1.1);transform:translateY(-1px);}
+
+/* ═══════ CONTROLS ═══════ */
+.ctrl{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
+.sbox{flex:1;min-width:210px;position:relative;}
+.sbox input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 36px 9px 38px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.sbox input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.08);}
+.sico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none;}
+.sclr{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;display:none;}
+.sclr.vis{display:block;}
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:13px;cursor:pointer;transition:all .15s;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:600;}
+.chip:hover{border-color:var(--accent);color:var(--text);}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.chip.sc.active{background:var(--star);border-color:var(--star);color:#000;}
+.ssort{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:7px 11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+
+/* ═══════ GRID ═══════ */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(308px,1fr));gap:13px;}
+
+/* ═══════ CARD ═══════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:17px 19px;position:relative;transition:transform .2s,box-shadow .2s,border-color .2s;animation:cIn .28s ease forwards;overflow:hidden;}
+@keyframes cIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+.card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:var(--cat-clr,var(--accent));opacity:0;transition:opacity .2s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 12px 34px rgba(0,0,0,.12);border-color:rgba(var(--accent-rgb),.35);}
+body.dark .card:hover{box-shadow:0 12px 34px rgba(0,0,0,.4);}
+.card:hover::before{opacity:1;}
+.card.starred{border-color:rgba(196,154,32,.35);}
+.card.starred::before{background:var(--star);opacity:1;}
+.ch{display:flex;align-items:flex-start;gap:10px;margin-bottom:7px;}
+.fav{width:22px;height:22px;border-radius:5px;background:var(--surface2);flex-shrink:0;margin-top:2px;border:1px solid var(--border);}
+.ctw{flex:1;min-width:0;}
+.ctitle{font-family:'Caveat',cursive;font-size:17px;font-weight:700;line-height:1.3;word-break:break-word;outline:none;border-radius:4px;padding:1px 3px;margin:-1px -3px;transition:background .15s;}
+.ctitle[contenteditable="true"]{background:var(--surface3);box-shadow:0 0 0 2px var(--accent);cursor:text;}
+.ctitle[contenteditable="true"]:empty::before{content:'Title...';color:var(--muted);}
+.curl{font-size:11px;color:var(--accent);text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;outline:none;border-radius:3px;padding:0 3px;margin-left:-3px;transition:background .15s;}
+.curl[contenteditable="true"]{background:var(--surface3);box-shadow:0 0 0 2px var(--accent3);color:var(--accent3);}
+.curl:not([contenteditable="true"]):hover{text-decoration:underline;}
+.cbadge{display:inline-flex;align-items:center;font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:7px;}
+.cnotes{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.5;outline:none;border-radius:6px;padding:4px 7px;margin-left:-7px;min-height:16px;word-break:break-word;transition:background .15s;}
+.cnotes[contenteditable="true"]{background:var(--surface3);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.25);color:var(--text);}
+.cnotes:empty::before{content:'Add notes...';color:var(--border);}
+.tw{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px;}
+.tag{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(var(--accent-rgb),.1);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2);cursor:pointer;transition:all .15s;}
+.tag:hover{background:rgba(var(--accent-rgb),.2);}
+.tiw{margin-top:6px;display:none;}
+.tiw.op{display:block;}
+.ti{width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:7px;padding:4px 9px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;outline:none;}
+.ti:focus{border-color:var(--accent3);}
+.cf{display:flex;align-items:center;justify-content:space-between;margin-top:11px;padding-top:10px;border-top:1px solid var(--border);}
+.cd{font-size:10px;color:var(--muted);}
+.ca{display:flex;gap:5px;}
+.ib{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;}
+.ib:hover{border-color:var(--accent);color:var(--text);}
+.ib.stb.on{color:var(--star);border-color:var(--star);background:rgba(196,154,32,.1);}
+.ib.edb.on{color:var(--accent3);border-color:var(--accent3);background:rgba(106,247,200,.08);}
+.ib.dlb:hover{color:var(--danger);border-color:var(--danger);}
+.ib.opb:hover{color:var(--accent2);border-color:var(--accent2);}
+
+/* FAV PREVIEW */
+.fp-row{display:flex;align-items:flex-end;gap:10px;}
+#fav-preview{width:32px;height:32px;border-radius:7px;border:1px solid var(--border);display:none;background:var(--surface2);}
+.fp-text{font-size:11px;color:var(--muted);padding:9px 12px;background:var(--surface2);border:1px dashed var(--border);border-radius:9px;flex:1;}
+
+/* AUTOSAVE */
+.sf{position:fixed;bottom:22px;right:22px;z-index:200;background:var(--surface);border:1px solid var(--accent3);color:var(--accent3);border-radius:10px;padding:9px 17px;font-size:12px;opacity:0;transform:translateY(12px);transition:all .25s;pointer-events:none;}
+.sf.show{opacity:1;transform:translateY(0);}
+
+/* EMPTY */
+.empty{grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted);}
+.empty .ei{font-size:52px;margin-bottom:16px;}
+.empty h3{font-family:'Caveat',cursive;font-size:24px;color:var(--text);margin-bottom:7px;}
+
+/* CAT COLOURS */
+.cat-Math       {--cat-clr:#4a7c59;background:rgba(74,124,89,.12);color:#3d6b4a;}
+.cat-Science    {--cat-clr:#2d7a8a;background:rgba(45,122,138,.12);color:#2d7a8a;}
+.cat-Programming{--cat-clr:#6a52c4;background:rgba(106,82,196,.12);color:#6a52c4;}
+.cat-English    {--cat-clr:#c44060;background:rgba(196,64,96,.12);color:#c44060;}
+.cat-History    {--cat-clr:#c4783a;background:rgba(196,120,58,.12);color:#c4783a;}
+.cat-Geography  {--cat-clr:#3a7ac4;background:rgba(58,122,196,.12);color:#3a7ac4;}
+.cat-Physics    {--cat-clr:#8a42c4;background:rgba(138,66,196,.12);color:#8a42c4;}
+.cat-Chemistry  {--cat-clr:#3aaa5a;background:rgba(58,170,90,.12);color:#3aaa5a;}
+.cat-Biology    {--cat-clr:#c4a23a;background:rgba(196,162,58,.12);color:#b8902a;}
+.cat-Other      {--cat-clr:#8a7a60;background:rgba(138,122,96,.12);color:#8a7a60;}
+
+body.dark .cat-Math       {--cat-clr:#6af7b0;background:rgba(106,247,176,.1);color:#6af7b0;}
+body.dark .cat-Science    {--cat-clr:#6af7e8;background:rgba(106,247,232,.1);color:#6af7e8;}
+body.dark .cat-Programming{--cat-clr:#a597fb;background:rgba(165,151,251,.1);color:#a597fb;}
+body.dark .cat-English    {--cat-clr:#f76a8a;background:rgba(247,106,138,.1);color:#f76a8a;}
+body.dark .cat-History    {--cat-clr:#f7b86a;background:rgba(247,184,106,.1);color:#f7b86a;}
+body.dark .cat-Geography  {--cat-clr:#6ab4f7;background:rgba(106,180,247,.1);color:#6ab4f7;}
+body.dark .cat-Physics    {--cat-clr:#d06af7;background:rgba(208,106,247,.1);color:#d06af7;}
+body.dark .cat-Chemistry  {--cat-clr:#6af777;background:rgba(106,247,119,.1);color:#6af777;}
+body.dark .cat-Biology    {--cat-clr:#f7d96a;background:rgba(247,217,106,.1);color:#f7d96a;}
+body.dark .cat-Other      {--cat-clr:#9a9bb5;background:rgba(154,155,181,.1);color:#9a9bb5;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 18px;font-size:13px;z-index:300;opacity:0;transition:all .25s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+@media(max-width:900px){
+  header{padding:11px 16px;flex-wrap:wrap;gap:8px;}
+  .wrap{padding:16px;}
+  .fg{grid-template-columns:1fr 1fr;}
+  .fg .btn-add{grid-column:1/-1;height:auto;padding:11px;}
+  .hstats{display:none;}
+}
+@media(max-width:520px){.fg{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div class="bg-canvas"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
+<div class="bg-grid"></div>
+
+<!-- ═══════════════ OWL OVERLAY ═══════════════ -->
+<div class="owl-overlay" id="owl-overlay">
+
+  <!-- OPENING SCENE -->
+  <div class="owl-scene owl-opening" id="owl-opening">
+    <div class="speech" id="owl-speech">Hey there! 👋 What's up?</div>
+    <div class="owl-wrap">
+      <!-- CUTE OWL SVG -->
+      <svg width="200" height="220" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Shadow -->
+        <ellipse cx="100" cy="212" rx="52" ry="8" fill="rgba(0,0,0,.12)"/>
+        <!-- Body -->
+        <ellipse cx="100" cy="130" rx="58" ry="72" fill="#c8a46e"/>
+        <!-- Belly -->
+        <ellipse cx="100" cy="148" rx="36" ry="48" fill="#f0d8a8"/>
+        <!-- Belly stripes -->
+        <path d="M78 130 Q100 125 122 130" stroke="#e0c090" stroke-width="1.5" fill="none" opacity=".6"/>
+        <path d="M74 142 Q100 136 126 142" stroke="#e0c090" stroke-width="1.5" fill="none" opacity=".6"/>
+        <path d="M76 154 Q100 148 124 154" stroke="#e0c090" stroke-width="1.5" fill="none" opacity=".6"/>
+        <!-- Wings -->
+        <ellipse class="owl-wing-l" cx="50" cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(-8 50 135)"/>
+        <ellipse class="owl-wing-r" cx="150" cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(8 150 135)"/>
+        <!-- Head -->
+        <ellipse cx="100" cy="72" rx="50" ry="48" fill="#c8a46e"/>
+        <!-- Ear tufts -->
+        <polygon points="68,30 60,8 80,28" fill="#a07030"/>
+        <polygon points="132,30 140,8 120,28" fill="#a07030"/>
+        <!-- Face disc -->
+        <ellipse cx="100" cy="76" rx="40" ry="36" fill="#e8c890"/>
+        <!-- Eye sockets -->
+        <circle cx="82" cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+        <circle cx="118" cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+        <!-- GLASSES frame -->
+        <circle cx="82" cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+        <circle cx="118" cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+        <line x1="99" y1="68" x2="101" y2="68" stroke="#4a3010" stroke-width="2.5"/>
+        <line x1="65" y1="62" x2="56" y2="58" stroke="#4a3010" stroke-width="2"/>
+        <line x1="135" y1="62" x2="144" y2="58" stroke="#4a3010" stroke-width="2"/>
+        <!-- Pupils (animated blink group) -->
+        <g class="owl-eye-l" style="transform-origin:82px 68px">
+          <circle cx="82" cy="68" r="9" fill="#2a1a08"/>
+          <circle cx="86" cy="64" r="3" fill="#fff" opacity=".8"/>
+          <circle cx="79" cy="72" r="1.5" fill="#fff" opacity=".4"/>
+        </g>
+        <g class="owl-eye-r" style="transform-origin:118px 68px">
+          <circle cx="118" cy="68" r="9" fill="#2a1a08"/>
+          <circle cx="122" cy="64" r="3" fill="#fff" opacity=".8"/>
+          <circle cx="115" cy="72" r="1.5" fill="#fff" opacity=".4"/>
+        </g>
+        <!-- Beak -->
+        <polygon points="100,82 92,94 108,94" fill="#e07830"/>
+        <line x1="92" y1="94" x2="108" y2="94" stroke="#c06020" stroke-width="1.2"/>
+        <!-- Cheek blush -->
+        <ellipse cx="70" cy="80" rx="8" ry="5" fill="#e08060" opacity=".35"/>
+        <ellipse cx="130" cy="80" rx="8" ry="5" fill="#e08060" opacity=".35"/>
+        <!-- Feet -->
+        <line x1="80" y1="198" x2="72" y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+        <line x1="80" y1="198" x2="80" y2="212" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+        <line x1="80" y1="198" x2="88" y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+        <line x1="120" y1="198" x2="112" y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+        <line x1="120" y1="198" x2="120" y2="212" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+        <line x1="120" y1="198" x2="128" y2="210" stroke="#a07030" stroke-width="3" stroke-linecap="round"/>
+        <!-- BOOK (held by wing) -->
+        <g class="owl-book" style="transform-origin:155px 160px">
+          <rect x="136" y="148" width="38" height="28" rx="3" fill="#4a7c59"/>
+          <rect x="136" y="148" width="4" height="28" rx="1" fill="#2d5a3a"/>
+          <line x1="144" y1="155" x2="168" y2="155" stroke="#fff" stroke-width="1.5" opacity=".5"/>
+          <line x1="144" y1="162" x2="168" y2="162" stroke="#fff" stroke-width="1.5" opacity=".5"/>
+          <line x1="144" y1="169" x2="168" y2="169" stroke="#fff" stroke-width="1.5" opacity=".5"/>
+          <text x="153" y="145" font-size="8" fill="#f7d96a" font-family="sans-serif" font-weight="bold">📖</text>
+        </g>
+        <!-- Graduation cap -->
+        <rect x="62" y="26" width="76" height="8" rx="2" fill="#2a1a08"/>
+        <polygon points="62,30 100,16 138,30" fill="#2a1a08"/>
+        <line x1="138" y1="30" x2="145" y2="44" stroke="#2a1a08" stroke-width="2"/>
+        <circle cx="145" cy="46" r="4" fill="#f7d96a"/>
+        <!-- Star sparkles around owl -->
+        <text x="20" y="55" font-size="14" opacity=".7" style="animation:sparkle 2s ease-in-out infinite">✨</text>
+        <text x="168" y="45" font-size="12" opacity=".7" style="animation:sparkle 2s ease-in-out infinite .5s">⭐</text>
+        <text x="10" y="120" font-size="10" opacity=".6" style="animation:sparkle 2s ease-in-out infinite 1s">✦</text>
+      </svg>
+    </div>
+    <button class="owl-btn" id="owl-btn" onclick="dismissOwl()">Let's Study! 🚀</button>
+  </div>
+
+  <!-- CLOSING SCENE -->
+  <div class="owl-scene owl-closing" id="owl-closing">
+    <div class="speech" id="owl-bye-speech">See you next time! 👋</div>
+    <div class="owl-wrap" style="animation-name:owlBounce;">
+      <svg width="180" height="200" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="100" cy="212" rx="52" ry="8" fill="rgba(0,0,0,.12)"/>
+        <ellipse cx="100" cy="130" rx="58" ry="72" fill="#c8a46e"/>
+        <ellipse cx="100" cy="148" rx="36" ry="48" fill="#f0d8a8"/>
+        <ellipse cx="50" cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(-8 50 135)"/>
+        <ellipse cx="150" cy="135" rx="22" ry="38" fill="#b08040" transform="rotate(8 150 135)"/>
+        <ellipse cx="100" cy="72" rx="50" ry="48" fill="#c8a46e"/>
+        <polygon points="68,30 60,8 80,28" fill="#a07030"/>
+        <polygon points="132,30 140,8 120,28" fill="#a07030"/>
+        <ellipse cx="100" cy="76" rx="40" ry="36" fill="#e8c890"/>
+        <circle cx="82" cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+        <circle cx="118" cy="68" r="16" fill="#fff" stroke="#8a6030" stroke-width="2"/>
+        <circle cx="82" cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+        <circle cx="118" cy="68" r="17" fill="none" stroke="#4a3010" stroke-width="2.5"/>
+        <line x1="99" y1="68" x2="101" y2="68" stroke="#4a3010" stroke-width="2.5"/>
+        <line x1="65" y1="62" x2="56" y2="58" stroke="#4a3010" stroke-width="2"/>
+        <line x1="135" y1="62" x2="144" y2="58" stroke="#4a3010" stroke-width="2"/>
+        <!-- Sleepy eyes (half closed) -->
+        <g style="transform-origin:82px 68px;transform:scaleY(.35)">
+          <circle cx="82" cy="68" r="9" fill="#2a1a08"/>
+          <circle cx="86" cy="64" r="3" fill="#fff" opacity=".8"/>
+        </g>
+        <g style="transform-origin:118px 68px;transform:scaleY(.35)">
+          <circle cx="118" cy="68" r="9" fill="#2a1a08"/>
+          <circle cx="122" cy="64" r="3" fill="#fff" opacity=".8"/>
+        </g>
+        <!-- ZZZ -->
+        <text x="130" y="35" font-size="14" fill="#6a9ef7" font-family="sans-serif" font-weight="bold" opacity=".8" style="animation:floatZ 2s ease-in-out infinite">z</text>
+        <text x="144" y="22" font-size="18" fill="#6a9ef7" font-family="sans-serif" font-weight="bold" opacity=".7" style="animation:floatZ 2s ease-in-out infinite .3s">z</text>
+        <text x="160" y="10" font-size="22" fill="#6a9ef7" font-family="sans-serif" font-weight="bold" opacity=".6" style="animation:floatZ 2s ease-in-out infinite .6s">Z</text>
+        <polygon points="100,82 92,94 108,94" fill="#e07830"/>
+        <rect x="62" y="26" width="76" height="8" rx="2" fill="#2a1a08"/>
+        <polygon points="62,30 100,16 138,30" fill="#2a1a08"/>
+        <line x1="138" y1="30" x2="145" y2="44" stroke="#2a1a08" stroke-width="2"/>
+        <circle cx="145" cy="46" r="4" fill="#f7d96a"/>
+      </svg>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <div>
+    <div class="logo">Study<em>Vault</em></div>
+    <div class="logo-sub">FastWeb · Resource Hub</div>
+  </div>
+
+  <div class="clock-wrap">
+    <div class="clock-time" id="clock-time">00:00:00</div>
+    <div class="clock-date" id="clock-date">—</div>
+    <div class="clock-mode" id="clock-mode">☀ Day</div>
+  </div>
+
+  <div class="hright">
+    <button class="mode-toggle" id="mode-toggle" onclick="toggleMode()">🌙 Night Mode</button>
+    <div class="hstats">
+      <div class="stat"><div class="sn" id="st-t">0</div><div class="sl">Resources</div></div>
+      <div class="stat"><div class="sn" id="st-s">0</div><div class="sl">Starred</div></div>
+      <div class="stat"><div class="sn" id="st-c">0</div><div class="sl">Categories</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<div class="wrap">
+  <div class="sh">// Add New Resource</div>
+  <div class="add-panel">
+    <div class="fg">
+      <div class="f"><label>Title</label><input type="text" id="fi-t" placeholder="e.g. Khan Academy – Algebra"></div>
+      <div class="f"><label>URL</label><input type="url" id="fi-u" placeholder="https://..." oninput="prevFav()"></div>
+      <div class="f"><label>Category</label>
+        <select id="fi-c">
+          <option>Math</option><option>Science</option><option>Physics</option>
+          <option>Chemistry</option><option>Biology</option><option>Programming</option>
+          <option>English</option><option>History</option><option>Geography</option><option>Other</option>
+        </select>
+      </div>
+      <div class="f"><label>Tags <small style="color:var(--border)">(comma)</small></label><input type="text" id="fi-g" placeholder="video, free, beginner"></div>
+      <button class="btn-add" onclick="addRes()">＋ Add</button>
+    </div>
+    <div class="fg2" style="margin-top:10px;">
+      <div class="f"><label>Notes</label><input type="text" id="fi-n" placeholder="Quick note about this resource..."></div>
+      <div class="fp-row">
+        <img id="fav-preview" src="" alt="">
+        <div class="fp-text" id="fp-txt">Enter a URL to preview its favicon</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <div class="sbox">
+      <span class="sico">⌕</span>
+      <input type="text" id="si" placeholder="Search title, URL, tag, notes, category…" oninput="onSrch(this)">
+      <button class="sclr" id="sclr" onclick="clrSrch()">✕</button>
+    </div>
+    <select class="ssort" id="ssrt" onchange="render()">
+      <option value="new">Newest first</option>
+      <option value="old">Oldest first</option>
+      <option value="az">A → Z</option>
+      <option value="za">Z → A</option>
+    </select>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="sf" id="sf">✓ Saved automatically</div>
+<div class="toast" id="toast"></div>
+
+<style>
+@keyframes sparkle{0%,100%{opacity:.7;transform:scale(1);}50%{opacity:1;transform:scale(1.3);}}
+@keyframes floatZ{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+</style>
+
+<script>
+/* ═══════════════════════════════════════
+   OPENING DIALOGUES — chosen randomly
+   ═══════════════════════════════════════ */
+const OPEN_DIALOGUES = [
+  "Hey, what's up? 👋\nWhat do you wanna study today?",
+  "Good to see you! 🦉\nReady to dive into something new?",
+  "Whooo's here to learn? 👓\nYour study vault awaits!",
+  "Hoot hoot! 📚\nKnowledge time — let's get it!",
+  "Ah, a fellow scholar! 🎓\nWhat subject are we conquering today?",
+  "Rise & shine, bookworm! ☀️\nYour resources are all here waiting.",
+  "Well, well, well...\nLooks like someone's serious about studying! 💪",
+  "I've been keeping your notes warm 📖\nWhat shall we explore today?",
+  "The wise owl greets you! 🌟\nEvery page you read makes you sharper.",
+  "Psst... I saved all your links! 🔖\nNow go learn something amazing!",
+  "You showed up — that's already 80% of it! 🚀\nLet's handle the other 20%.",
+];
+const CLOSE_DIALOGUES = [
+  "See you next time! 👋\nYou studied well today — be proud!",
+  "Hoot hoot! 🦉\nOff to dreamland I go...",
+  "Great session! 🌙\nCome back soon, we've got more to learn!",
+  "Goodbye, scholar! ⭐\nRest well and let it all sink in.",
+  "See ya! 📚\nRemember: small steps every day!",
+  "Night night! 💤\nYou're one step smarter now.",
+];
+
+/* ═══════════════════════════════════════
+   OWL LOGIC
+   ═══════════════════════════════════════ */
+let owlDismissed = false;
+
+function showOwlOpening() {
+  const h = new Date().getHours();
+  let greeting;
+  if (h >= 5 && h < 12)       greeting = "Good morning, scholar! ☀️\nWhat are we learning today?";
+  else if (h >= 12 && h < 17) greeting = "Good afternoon! 📖\nPerfect time for a study session!";
+  else if (h >= 17 && h < 21) greeting = "Good evening! 🌆\nEvening study sessions hit different!";
+  else                         greeting = "Burning the midnight oil? 🌙\nI'm right here with you!";
+
+  // Mix in a random dialogue sometimes
+  const dialogues = [greeting, ...OPEN_DIALOGUES];
+  const msg = dialogues[Math.floor(Math.random() * dialogues.length)];
+  document.getElementById('owl-speech').innerHTML = msg.replace(/\n/g,'<br>');
+  document.getElementById('owl-overlay').classList.remove('hidden','hiding','closing');
+}
+
+function dismissOwl() {
+  const overlay = document.getElementById('owl-overlay');
+  overlay.classList.add('hiding');
+  owlDismissed = true;
+  setTimeout(() => overlay.classList.add('hidden'), 650);
+}
+
+function showOwlClosing() {
+  const msg = CLOSE_DIALOGUES[Math.floor(Math.random() * CLOSE_DIALOGUES.length)];
+  document.getElementById('owl-bye-speech').innerHTML = msg.replace(/\n/g,'<br>');
+  const overlay = document.getElementById('owl-overlay');
+  overlay.classList.remove('hidden','hiding');
+  overlay.classList.add('closing');
+  overlay.style.pointerEvents = 'none';
+  setTimeout(() => { overlay.classList.add('hiding'); }, 2800);
+  setTimeout(() => { overlay.classList.add('hidden'); }, 3500);
+}
+
+window.addEventListener('beforeunload', () => { if (owlDismissed) showOwlClosing(); });
+
+/* ═══════════════════════════════════════
+   CLOCK + DAY/NIGHT THEME
+   ═══════════════════════════════════════ */
+let manualMode = null; // null = auto, 'light', 'dark'
+
+function getHour() { return new Date().getHours(); }
+
+function isNightTime(h) { return h >= 19 || h < 6; }
+
+function applyDayNight(force) {
+  const h = getHour();
+  const dark = force !== undefined ? force : isNightTime(h);
+  document.body.classList.toggle('dark', dark);
+  const modeEl = document.getElementById('clock-mode');
+  const btn = document.getElementById('mode-toggle');
+  if (dark) {
+    modeEl.textContent = '🌙 Night'; modeEl.style.color = 'var(--accent)';
+    btn.textContent = '☀ Day Mode';
+  } else {
+    modeEl.textContent = '☀ Day'; modeEl.style.color = 'var(--accent2)';
+    btn.textContent = '🌙 Night Mode';
+  }
+}
+
+function toggleMode() {
+  const isDark = document.body.classList.contains('dark');
+  manualMode = isDark ? 'light' : 'dark';
+  applyDayNight(manualMode === 'dark');
+}
+
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function tickClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock-time').textContent = `${h}:${m}:${s}`;
+  document.getElementById('clock-date').textContent =
+    `${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  // Auto switch only if user hasn't manually toggled
+  if (manualMode === null) applyDayNight();
+}
+
+setInterval(tickClock, 1000);
+tickClock();
+
+/* ═══════════════════════════════════════
+   DATA — SEED
+   ═══════════════════════════════════════ */
+const SEED=[
+  {id:1,title:'Khan Academy – Math',url:'https://khanacademy.org/math',category:'Math',tags:['free','video','all-levels'],notes:'Full K-12 curriculum',starred:true,date:'2025-01-01'},
+  {id:2,title:'Desmos Graphing Calculator',url:'https://desmos.com/calculator',category:'Math',tags:['tool','graphing','interactive'],notes:'Plot any function instantly',starred:false,date:'2025-01-02'},
+  {id:3,title:'Wolfram Alpha',url:'https://wolframalpha.com',category:'Math',tags:['solver','step-by-step'],notes:'Get worked solutions',starred:true,date:'2025-01-03'},
+  {id:4,title:"Paul's Online Math Notes",url:'https://tutorial.math.lamar.edu',category:'Math',tags:['calculus','algebra','notes'],notes:'Excellent for Calculus I–III',starred:false,date:'2025-01-04'},
+  {id:5,title:'MIT OCW – Single Variable Calculus',url:'https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010',category:'Math',tags:['MIT','calculus','advanced'],notes:'Free MIT lecture notes & problem sets',starred:false,date:'2025-01-05'},
+  {id:6,title:'Art of Problem Solving',url:'https://artofproblemsolving.com',category:'Math',tags:['olympiad','competition','challenging'],notes:'Olympiad & competition math',starred:false,date:'2025-01-06'},
+  {id:7,title:'PhET Interactive Simulations',url:'https://phet.colorado.edu',category:'Science',tags:['simulation','free','interactive'],notes:'Physics, chemistry & bio sims',starred:true,date:'2025-01-07'},
+  {id:8,title:'Crash Course – Science',url:'https://youtube.com/@crashcourse',category:'Science',tags:['youtube','video','quick'],notes:'Engaging overview of all sciences',starred:false,date:'2025-01-08'},
+  {id:9,title:'Science Daily',url:'https://sciencedaily.com',category:'Science',tags:['news','research','current'],notes:'Latest science research news',starred:false,date:'2025-01-09'},
+  {id:10,title:'HyperPhysics',url:'http://hyperphysics.phy-astr.gsu.edu',category:'Physics',tags:['reference','concept-maps','GSU'],notes:'Best concept-map style reference',starred:true,date:'2025-01-10'},
+  {id:11,title:'The Feynman Lectures Online',url:'https://feynmanlectures.caltech.edu',category:'Physics',tags:['Feynman','advanced','Caltech'],notes:'Classic lectures freely available',starred:true,date:'2025-01-11'},
+  {id:12,title:'Physics Classroom',url:'https://physicsclassroom.com',category:'Physics',tags:['tutorials','high-school','practice'],notes:'Great for 11th–12th grade physics',starred:false,date:'2025-01-12'},
+  {id:13,title:'AP Physics – Khan Academy',url:'https://khanacademy.org/science/ap-physics-1',category:'Physics',tags:['AP','exam-prep','free'],notes:'AP Physics 1 & 2 exam prep',starred:false,date:'2025-01-13'},
+  {id:14,title:'ChemLibreTexts',url:'https://chem.libretexts.org',category:'Chemistry',tags:['textbook','open-access','free'],notes:'Open-access chemistry textbooks',starred:true,date:'2025-01-14'},
+  {id:15,title:'Ptable – Interactive Periodic Table',url:'https://ptable.com',category:'Chemistry',tags:['periodic-table','reference','interactive'],notes:'Click any element for full data',starred:false,date:'2025-01-15'},
+  {id:16,title:'RSC Learn Chemistry',url:'https://edu.rsc.org',category:'Chemistry',tags:['RSC','lab','official'],notes:'Official Royal Society resources',starred:false,date:'2025-01-16'},
+  {id:17,title:'Chemguide',url:'https://chemguide.co.uk',category:'Chemistry',tags:['A-level','UK','notes'],notes:'A-Level chemistry revision notes',starred:true,date:'2025-01-17'},
+  {id:18,title:'Khan Academy – Biology',url:'https://khanacademy.org/science/biology',category:'Biology',tags:['free','cell','genetics'],notes:'Cells to ecosystems coverage',starred:false,date:'2025-01-18'},
+  {id:19,title:'Visible Body',url:'https://visiblebody.com',category:'Biology',tags:['anatomy','3D','interactive'],notes:'3D human anatomy explorer',starred:true,date:'2025-01-19'},
+  {id:20,title:'NCBI Bookshelf – Molecular Biology',url:'https://ncbi.nlm.nih.gov/books/NBK21054',category:'Biology',tags:['molecular','advanced','NCBI'],notes:'Free molecular biology textbook',starred:false,date:'2025-01-20'},
+  {id:21,title:'Biology Online Dictionary',url:'https://biologyonline.com/dictionary',category:'Biology',tags:['glossary','definitions','quick-ref'],notes:'Fast lookup for biology terms',starred:false,date:'2025-01-21'},
+  {id:22,title:'MDN Web Docs',url:'https://developer.mozilla.org',category:'Programming',tags:['reference','HTML','CSS','JS'],notes:'Best web tech reference',starred:true,date:'2025-01-22'},
+  {id:23,title:'freeCodeCamp',url:'https://freecodecamp.org',category:'Programming',tags:['free','project-based','web-dev'],notes:'Hands-on coding with projects',starred:true,date:'2025-01-23'},
+  {id:24,title:'LeetCode',url:'https://leetcode.com',category:'Programming',tags:['DSA','interview-prep','problems'],notes:'Data structures & algorithm practice',starred:false,date:'2025-01-24'},
+  {id:25,title:'CS50 – Harvard (edX)',url:'https://cs50.harvard.edu',category:'Programming',tags:['Harvard','free','intro-CS'],notes:'Best intro to CS course',starred:true,date:'2025-01-25'},
+  {id:26,title:'GeeksforGeeks',url:'https://geeksforgeeks.org',category:'Programming',tags:['algorithms','CS-fundamentals','exam'],notes:'CS exam & interview prep',starred:false,date:'2025-01-26'},
+  {id:27,title:'The Odin Project',url:'https://theodinproject.com',category:'Programming',tags:['full-stack','project','free'],notes:'Full-stack web dev curriculum',starred:false,date:'2025-01-27'},
+  {id:28,title:'Purdue OWL',url:'https://owl.purdue.edu',category:'English',tags:['essay','APA','MLA','citation'],notes:'Gold standard for academic writing',starred:true,date:'2025-01-28'},
+  {id:29,title:'Project Gutenberg',url:'https://gutenberg.org',category:'English',tags:['free','classic-literature','ebook'],notes:'60,000+ free classic books',starred:false,date:'2025-01-29'},
+  {id:30,title:'Vocabulary.com',url:'https://vocabulary.com',category:'English',tags:['vocabulary','gamified','learning'],notes:'Game-based vocabulary building',starred:false,date:'2025-01-30'},
+  {id:31,title:'Hemingway Editor',url:'https://hemingwayapp.com',category:'English',tags:['writing','readability','tool'],notes:'Improve writing clarity & style',starred:false,date:'2025-01-31'},
+  {id:32,title:'British Council – Learn English',url:'https://learnenglish.britishcouncil.org',category:'English',tags:['grammar','skills','official'],notes:'Official British Council resources',starred:true,date:'2025-02-01'},
+  {id:33,title:'World History Encyclopedia',url:'https://worldhistory.org',category:'History',tags:['peer-reviewed','ancient','articles'],notes:'Free peer-reviewed history articles',starred:true,date:'2025-02-02'},
+  {id:34,title:'Crash Course History (YouTube)',url:'https://youtube.com/playlist?list=PLBDA2E52FB1EF80C9',category:'History',tags:['youtube','video','John-Green'],notes:"John Green's entertaining history series",starred:true,date:'2025-02-03'},
+  {id:35,title:'HISTORY.com',url:'https://history.com',category:'History',tags:['articles','documentary','broad'],notes:'History articles, videos & docs',starred:false,date:'2025-02-04'},
+  {id:36,title:'Internet History Sourcebooks',url:'https://sourcebooks.fordham.edu',category:'History',tags:['primary-sources','Fordham','academic'],notes:'Primary source documents collection',starred:false,date:'2025-02-05'},
+  {id:37,title:'National Geographic Education',url:'https://education.nationalgeographic.org',category:'Geography',tags:['maps','environment','Nat-Geo'],notes:'Maps, articles & explorer stories',starred:false,date:'2025-02-06'},
+  {id:38,title:'CIA World Factbook',url:'https://cia.gov/the-world-factbook',category:'Geography',tags:['reference','countries','statistics'],notes:'Country data & geography stats',starred:true,date:'2025-02-07'},
+  {id:39,title:'Google Earth',url:'https://earth.google.com',category:'Geography',tags:['maps','3D','satellite'],notes:'Explore Earth in 3D satellite view',starred:false,date:'2025-02-08'},
+  {id:40,title:'Seterra Geography Games',url:'https://seterra.com',category:'Geography',tags:['quiz','gamified','map-skills'],notes:'Learn countries & capitals through quizzes',starred:false,date:'2025-02-09'},
+];
+
+/* ═══════════════════════════════════════
+   STATE & STORAGE
+   ═══════════════════════════════════════ */
+const KEY='studyvault_v4';
+let res=[], activeF='All', saveTimer=null;
+function loadData(){ try{ res=JSON.parse(localStorage.getItem(KEY)||'null')||[...SEED]; }catch{ res=[...SEED]; } }
+function saveData(silent=false){ localStorage.setItem(KEY,JSON.stringify(res)); if(!silent)flashSave(); }
+function flashSave(){
+  const el=document.getElementById('sf');
+  el.classList.add('show'); clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),1800);
+}
+
+/* ═══════════════════════════════════════
+   CHIPS
+   ═══════════════════════════════════════ */
+const CATS=['Math','Science','Physics','Chemistry','Biology','Programming','English','History','Geography','Other'];
+function buildChips(){
+  document.getElementById('chips').innerHTML=
+    ['All',...CATS,'★ Starred'].map(c=>`<span class="chip ${c===activeF?'active':''} ${c==='★ Starred'?'sc':''}" onclick="setF('${c}',this)">${c}</span>`).join('');
+}
+function setF(v,el){ activeF=v; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); render(); }
+
+/* ═══════════════════════════════════════
+   SEARCH
+   ═══════════════════════════════════════ */
+function onSrch(inp){ document.getElementById('sclr').classList.toggle('vis',inp.value.length>0); render(); }
+function clrSrch(){ document.getElementById('si').value=''; document.getElementById('sclr').classList.remove('vis'); render(); }
+
+/* ═══════════════════════════════════════
+   FAVICON
+   ═══════════════════════════════════════ */
+function prevFav(){
+  const url=document.getElementById('fi-u').value.trim();
+  const img=document.getElementById('fav-preview'), txt=document.getElementById('fp-txt');
+  if(!url){img.style.display='none';txt.textContent='Enter a URL to preview its favicon';return;}
+  try{
+    const h=new URL(url).hostname;
+    img.src=`https://www.google.com/s2/favicons?sz=64&domain=${h}`;
+    img.style.display='block'; img.onerror=()=>{img.style.display='none';};
+    txt.textContent=h;
+  }catch{img.style.display='none';txt.textContent='Invalid URL';}
+}
+function getFav(url){ try{return`https://www.google.com/s2/favicons?sz=32&domain=${new URL(url).hostname}`;}catch{return'';} }
+
+/* ═══════════════════════════════════════
+   ADD
+   ═══════════════════════════════════════ */
+function addRes(){
+  const t=document.getElementById('fi-t').value.trim();
+  const u=document.getElementById('fi-u').value.trim();
+  const c=document.getElementById('fi-c').value;
+  const g=document.getElementById('fi-g').value.split(',').map(x=>x.trim()).filter(Boolean);
+  const n=document.getElementById('fi-n').value.trim();
+  if(!t||!u){showToast('⚠ Title and URL required');return;}
+  res.unshift({id:Date.now(),title:t,url:u,category:c,tags:g,notes:n,starred:false,date:new Date().toISOString().slice(0,10)});
+  saveData();render();
+  ['fi-t','fi-u','fi-g','fi-n'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fav-preview').style.display='none';
+  document.getElementById('fp-txt').textContent='Enter a URL to preview its favicon';
+  showToast('✓ Resource added!');
+}
+
+/* ═══════════════════════════════════════
+   STAR / DELETE
+   ═══════════════════════════════════════ */
+function toggleStar(id){ const r=res.find(x=>x.id===id); if(r){r.starred=!r.starred;saveData();render();} }
+function delRes(id){ if(!confirm('Delete this resource?'))return; res=res.filter(x=>x.id!==id); saveData();render();showToast('Deleted'); }
+
+/* ═══════════════════════════════════════
+   INLINE EDIT
+   ═══════════════════════════════════════ */
+function toggleEdit(id){
+  const card=document.querySelector(`[data-id="${id}"]`);
+  if(!card)return;
+  if(card.dataset.editing==='true'){commitEdit(id,card);}
+  else{
+    card.dataset.editing='true';
+    card.querySelector('.ctitle').contentEditable='true';
+    card.querySelector('.curl').contentEditable='true';
+    card.querySelector('.cnotes').contentEditable='true';
+    card.querySelector('.tiw').classList.add('op');
+    card.querySelector('.edb').classList.add('on');
+    card.querySelector('.ctitle').focus();
+  }
+}
+function commitEdit(id,card){
+  const r=res.find(x=>x.id===id); if(!r)return;
+  r.title=card.querySelector('.ctitle').innerText.trim()||r.title;
+  r.url  =card.querySelector('.curl').innerText.trim()||r.url;
+  r.notes=card.querySelector('.cnotes').innerText.trim();
+  const tv=card.querySelector('.ti').value.trim();
+  if(tv){r.tags=[...new Set([...r.tags,...tv.split(',').map(x=>x.trim()).filter(Boolean)])];}
+  card.dataset.editing='false';
+  ['ctitle','curl','cnotes'].forEach(cls=>{card.querySelector('.'+cls).contentEditable='false';});
+  card.querySelector('.tiw').classList.remove('op');
+  card.querySelector('.ti').value='';
+  card.querySelector('.edb').classList.remove('on');
+  saveData();showToast('✓ Changes saved');render();
+}
+function removeTag(id,i){ const r=res.find(x=>x.id===id); if(r){r.tags.splice(i,1);saveData();render();} }
+function tagKey(e,id){
+  if(e.key==='Enter'){
+    const tags=e.target.value.split(',').map(x=>x.trim()).filter(Boolean);
+    const r=res.find(x=>x.id===id);
+    if(r&&tags.length){r.tags=[...new Set([...r.tags,...tags])];e.target.value='';saveData();render();showToast('Tags added ✓');}
+  }
+}
+
+/* ═══════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════ */
+function render(){
+  const q=(document.getElementById('si').value||'').toLowerCase();
+  const srt=document.getElementById('ssrt').value;
+  let list=res.filter(r=>{
+    if(activeF==='★ Starred'&&!r.starred)return false;
+    if(activeF!=='All'&&activeF!=='★ Starred'&&r.category!==activeF)return false;
+    if(q)return[r.title,r.url,r.notes||'',r.category,...r.tags].some(s=>s.toLowerCase().includes(q));
+    return true;
+  });
+  list=[...list].sort((a,b)=>srt==='new'?b.id-a.id:srt==='old'?a.id-b.id:srt==='az'?a.title.localeCompare(b.title):b.title.localeCompare(a.title));
+  const g=document.getElementById('grid');
+  g.innerHTML=list.length?list.map(cardHTML).join('')
+    :`<div class="empty"><div class="ei">📚</div><h3>Nothing here</h3><p>Add a resource or try a different filter.</p></div>`;
+  document.getElementById('st-t').textContent=res.length;
+  document.getElementById('st-s').textContent=res.filter(r=>r.starred).length;
+  document.getElementById('st-c').textContent=[...new Set(res.map(r=>r.category))].length;
+}
+function cardHTML(r){
+  const fav=getFav(r.url);
+  const dateStr=r.date?new Date(r.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';
+  const tagsHTML=r.tags.map((t,i)=>`<span class="tag" onclick="removeTag(${r.id},${i})" title="Click to remove">#${esc(t)}</span>`).join('');
+  return`<div class="card ${r.starred?'starred':''}" data-id="${r.id}" data-editing="false">
+    <div class="ch">
+      <img class="fav" src="${fav}" alt="" onerror="this.style.visibility='hidden'">
+      <div class="ctw">
+        <div class="ctitle" contenteditable="false" spellcheck="false">${esc(r.title)}</div>
+        <a class="curl" href="${esc(r.url)}" target="_blank" rel="noopener" contenteditable="false" spellcheck="false" onclick="handleA(event,this)">${esc(r.url)}</a>
+      </div>
+    </div>
+    <span class="cbadge cat-${r.category}">${r.category}</span>
+    <div class="cnotes" contenteditable="false">${esc(r.notes||'')}</div>
+    <div class="tw">${tagsHTML}</div>
+    <div class="tiw"><input class="ti" type="text" placeholder="+ add tags (comma-sep), Enter to save" onkeydown="tagKey(event,${r.id})"></div>
+    <div class="cf">
+      <span class="cd">${dateStr}</span>
+      <div class="ca">
+        <div class="ib stb ${r.starred?'on':''}" onclick="toggleStar(${r.id})" title="${r.starred?'Unstar':'Star'}">★</div>
+        <div class="ib opb" onclick="window.open('${esc(r.url)}','_blank')" title="Open">↗</div>
+        <div class="ib edb" onclick="toggleEdit(${r.id})" title="Edit / Save">✎</div>
+        <div class="ib dlb" onclick="delRes(${r.id})" title="Delete">✕</div>
+      </div>
+    </div>
+  </div>`;
+}
+function handleA(e,el){if(el.closest('.card').dataset.editing==='true')e.preventDefault();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(m){
+  const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.activeElement.closest('.add-panel')&&document.activeElement.tagName==='INPUT')addRes();
+});
+
+/* ═══════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════ */
+loadData();
+buildChips();
+render();
+showOwlOpening();
+</script>
+</body>
+</html>
